@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "metadataannotation"
+version = "0.1.0"
+description = "Research package: structure-aware metadata annotation for document retrieval"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "rich",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
