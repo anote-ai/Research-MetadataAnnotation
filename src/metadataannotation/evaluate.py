@@ -1,9 +1,16 @@
 from __future__ import annotations
 
 import math
-from typing import List, Tuple, Dict
+from collections import defaultdict
+from typing import Dict, List, Optional, Tuple
 
-from .core import MetadataExperiment, DocumentDomain
+from .core import (
+    DocumentDomain,
+    MetadataAnnotation,
+    MetadataExperiment,
+    annotation_confidence_score,
+    fleiss_kappa,
+)
 
 
 def metadata_gain(baseline_recall: float, metadata_recall: float) -> float:
@@ -37,7 +44,6 @@ def domain_summary(
     experiments: List[MetadataExperiment],
 ) -> Dict[str, Dict]:
     """Return per-domain mean gain, mean complexity, and count."""
-    from collections import defaultdict
     import statistics
 
     buckets: Dict[str, list] = defaultdict(list)
@@ -80,3 +86,49 @@ def rank_domains_by_gain(
         reverse=True,
     )
     return ranked
+
+
+def fleiss_kappa_from_annotations(
+    annotations: List[MetadataAnnotation],
+    doc_ids: Optional[List[str]] = None,
+    field: Optional[str] = None,
+) -> float:
+    """Compute Fleiss’ kappa from a list of MetadataAnnotation objects.
+
+    Optionally restrict to specific document IDs or a specific field.
+    Items with fewer than 2 annotations are excluded.
+    """
+    subset = annotations
+    if field is not None:
+        subset = [a for a in subset if a.field == field]
+    if doc_ids is not None:
+        doc_id_set = set(doc_ids)
+        subset = [a for a in subset if a.doc_id in doc_id_set]
+
+    # Group by (doc_id, field) to form rating items
+    groups: Dict[Tuple[str, str], List[str]] = defaultdict(list)
+    for a in subset:
+        groups[(a.doc_id, a.field)].append(a.value)
+
+    # Keep only groups with >= 2 annotations
+    ratings = [labels for labels in groups.values() if len(labels) >= 2]
+    if not ratings:
+        return 0.0
+    return fleiss_kappa(ratings)
+
+
+def annotation_quality_score(
+    annotations: List[MetadataAnnotation],
+    doc_ids: Optional[List[str]] = None,
+    field: Optional[str] = None,
+) -> float:
+    """Composite annotation quality score in [0, 1].
+
+    Combines Fleiss kappa (inter-annotator agreement) with mean confidence.
+    Both components contribute 50% each.
+    """
+    kappa = fleiss_kappa_from_annotations(annotations, doc_ids=doc_ids, field=field)
+    # Normalise kappa from [-1, 1] to [0, 1]
+    kappa_norm = (kappa + 1.0) / 2.0
+    confidence = annotation_confidence_score(annotations, field=field)
+    return 0.5 * kappa_norm + 0.5 * confidence
