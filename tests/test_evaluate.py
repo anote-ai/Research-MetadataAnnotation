@@ -35,6 +35,11 @@ def test_correlation_complexity_gain_perfect() -> None:
     assert r == pytest.approx(1.0, abs=1e-6)
 
 
+def test_correlation_complexity_gain_length_mismatch() -> None:
+    with pytest.raises(ValueError, match="same length"):
+        correlation_complexity_gain([0.1, 0.2], [0.1])
+
+
 def test_domain_summary_keys() -> None:
     exps = make_dataset(n_per_domain=3)
     summary = domain_summary(exps)
@@ -56,6 +61,11 @@ def test_structure_prediction_error_perfect() -> None:
 
 def test_structure_prediction_error_empty() -> None:
     assert structure_prediction_error([], []) == 0.0
+
+
+def test_structure_prediction_error_length_mismatch() -> None:
+    with pytest.raises(ValueError, match="same length"):
+        structure_prediction_error([0.1, 0.2], [0.1])
 
 
 def test_rank_domains_by_gain_order() -> None:

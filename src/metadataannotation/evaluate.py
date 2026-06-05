@@ -20,6 +20,8 @@ def metadata_gain(baseline_recall: float, metadata_recall: float) -> float:
 
 def pearson_r(xs: List[float], ys: List[float]) -> float:
     """Compute Pearson correlation coefficient manually."""
+    if len(xs) != len(ys):
+        raise ValueError("xs and ys must have the same length.")
     n = len(xs)
     if n < 2:
         return 0.0
@@ -68,6 +70,8 @@ def structure_prediction_error(
     predicted_gains: List[float], actual_gains: List[float]
 ) -> float:
     """Mean Absolute Error between predicted and actual gains."""
+    if len(predicted_gains) != len(actual_gains):
+        raise ValueError("predicted_gains and actual_gains must have the same length.")
     if not predicted_gains:
         return 0.0
     return sum(abs(p - a) for p, a in zip(predicted_gains, actual_gains)) / len(
