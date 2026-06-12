@@ -17,3 +17,5 @@ __all__ = [
     "compute_complexity_score",
     "StructurePredictor",
 ]
+
+__version__ = "0.1.0"
